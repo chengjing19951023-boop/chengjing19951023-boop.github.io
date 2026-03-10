@@ -40,9 +40,10 @@ body {
   width:  var(--book-w);
   height: var(--page-h);
   perspective: 2400px;
-  filter:
-    drop-shadow(0 20px 45px rgba(0,0,0,.20))
-    drop-shadow(0  4px  8px rgba(0,0,0,.10));
+  /* box-shadow instead of filter:drop-shadow — filter breaks transform-style:preserve-3d */
+  box-shadow:
+    0 20px 45px rgba(0,0,0,.20),
+    0  4px  8px rgba(0,0,0,.10);
 }
 
 .panel {
@@ -113,7 +114,7 @@ body {
 .page.flipped { transform: rotateY(-180deg); }
 .page.turning {
   z-index: 200 !important;
-  filter: drop-shadow(4px 0 12px rgba(0,0,0,.18));
+  /* No filter here — filter on a 3D element also flattens backface-visibility */
 }
 
 /* ── Click zones ── */
