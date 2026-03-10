@@ -5,31 +5,22 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>CHENG Jing — Landscape Architecture Portfolio</title>
 <style>
-/* ============================================================
-   RESET & CSS CUSTOM PROPERTIES
-   ============================================================ */
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
 :root {
-  /* Book dimensions — fluid, landscape A4 ratio (297:210 ≈ 1.414).
-     Width:  at most 47 vw per page (book = 94 vw).
-     Height: at most (100vh - 110px) for page height, back-calculated to width.
-     The min() picks whichever constraint is tighter.               */
+  /* Fluid landscape-A4 (297:210 ≈ 1.414).
+     min() picks tighter of: 47 vw per page, or height-derived width. */
   --page-w: min(47vw, calc((100vh - 110px) * 297 / 210));
   --page-h: calc(var(--page-w) * 210 / 297);
   --book-w: calc(var(--page-w) * 2);
 
-  --bg:         #dedad4;    /* page background / scene  */
-  --paper:      #f9f8f5;    /* right-stack page face    */
-  --paper-left: #f2f0eb;    /* left-stack  page face    */
+  --bg:         #dedad4;
+  --paper:      #f9f8f5;
+  --paper-left: #f2f0eb;
   --ink-muted:  #7a7672;
-  --accent:     #4a5e4a;    /* muted olive — landscape  */
-  --flip-dur:   750ms;      /* page-turn animation time */
+  --flip-dur:   750ms;
 }
 
-/* ============================================================
-   SCENE
-   ============================================================ */
 html, body { height: 100%; overflow: hidden; }
 
 body {
@@ -41,15 +32,9 @@ body {
   align-items: center;
   justify-content: center;
   gap: 24px;
-  /* subtle paper grain */
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='200' height='200' filter='url(%23n)' opacity='0.035'/%3E%3C/svg%3E");
 }
 
-/* ============================================================
-   BOOK WRAPPER
-   perspective creates the 3-D viewing cone for all child
-   rotateY transforms.  The spine sits at exactly 50% (left).
-   ============================================================ */
 .book-wrapper {
   position: relative;
   width:  var(--book-w);
@@ -60,18 +45,15 @@ body {
     drop-shadow(0  4px  8px rgba(0,0,0,.10));
 }
 
-/* ── Static left & right background panels (always visible) ── */
 .panel {
   position: absolute;
   top: 0;
   width: var(--page-w);
   height: var(--page-h);
-  background: var(--paper);
 }
-.panel.left  { left: 0;                background: var(--paper-left); }
-.panel.right { left: var(--page-w);    background: var(--paper); }
+.panel.left  { left: 0;             background: var(--paper-left); }
+.panel.right { left: var(--page-w); background: var(--paper); }
 
-/* ── Spine line ── */
 .spine {
   position: absolute;
   left: calc(var(--page-w) - 3px);
@@ -83,19 +65,11 @@ body {
   pointer-events: none;
 }
 
-/* ============================================================
-   PAGE BASE STYLES
-   Every .page is a "leaf" positioned so its LEFT EDGE sits
-   exactly on the SPINE (left: var(--page-w)).
-   transform-origin: left center → rotations pivot around spine.
-
-   rotateY(0deg)    → leaf extends to the RIGHT  (unread stack)
-   rotateY(-180deg) → leaf swings to the LEFT    (read stack)
-   ============================================================ */
+/* ── Page leaves ── */
 .page {
   position: absolute;
-  top:    0;
-  left:   var(--page-w);      /* ← LEFT EDGE at the SPINE      */
+  top:  0;
+  left: var(--page-w);
   width:  var(--page-w);
   height: var(--page-h);
   transform-origin: left center;
@@ -105,88 +79,56 @@ body {
   z-index: 1;
 }
 
-/* ── Front face (right-side, pre-flip) ── */
-.page .front {
-  position: absolute;
-  inset: 0;
-  backface-visibility:         hidden;
-  -webkit-backface-visibility: hidden;
-  overflow: hidden;
-  background: var(--paper);
-  /* page-edge shadow toward spine */
-  box-shadow: inset -8px 0 20px rgba(0,0,0,.07);
-}
-
-/* ── Back face (left-side, post-flip)
-   Pre-rotated 180° so it faces the viewer after the parent
-   rotates -180°.  Combined transform = 0° → faces viewer.   ── */
+.page .front,
 .page .back {
   position: absolute;
   inset: 0;
   backface-visibility:         hidden;
   -webkit-backface-visibility: hidden;
   overflow: hidden;
+}
+.page .front {
+  background: var(--paper);
+  box-shadow: inset -8px 0 20px rgba(0,0,0,.07);
+}
+.page .back {
   background: var(--paper-left);
   transform: rotateY(180deg);
-  /* page-edge shadow toward spine */
   box-shadow: inset 8px 0 20px rgba(0,0,0,.07);
 }
 
-/* ── Images inside each face fill the face completely ── */
+/* ── Images: fill face, no upscaling blur ── */
 .page .front img,
 .page .back  img {
   display: block;
   width:  100%;
   height: 100%;
-  object-fit: cover;   /* change to "contain" if you prefer white bars */
-  object-position: center;
+  object-fit: fill;   /* PDF pages are already the correct ratio */
   pointer-events: none;
   user-select: none;
   -webkit-user-drag: none;
+  image-rendering: -webkit-optimize-contrast; /* sharper on WebKit */
 }
 
-/* ── FLIPPED STATE: page has been turned (swings left) ── */
-.page.flipped {
-  transform: rotateY(-180deg);
-}
-
-/* ── While a page is mid-animation, boost z-index so it
-   travels OVER all other pages in both stacks ── */
+.page.flipped { transform: rotateY(-180deg); }
 .page.turning {
   z-index: 200 !important;
-  /* dynamic curl shadow — stronger at mid-flip */
   filter: drop-shadow(4px 0 12px rgba(0,0,0,.18));
 }
 
-/* ============================================================
-   TRANSPARENT CLICK ZONES
-   Invisible overlays on the left / right halves capture user
-   clicks for forward / backward navigation.
-   z-index must be above all pages (except .turning).
-   ============================================================ */
+/* ── Click zones ── */
 .click-zone {
   position: absolute;
   top: 0;
   height: 100%;
-  width:  calc(var(--page-w) - 20px); /* slight inset from spine */
+  width: calc(var(--page-w) - 20px);
   z-index: 100;
   cursor: pointer;
 }
-/* Left zone — click to go BACK */
-.click-zone.left  {
-  left: 0;
-  cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24'%3E%3Cpath fill='%234a5e4a' d='M15 18l-6-6 6-6'/%3E%3C/svg%3E") 12 12, w-resize;
-}
-/* Right zone — click to go FORWARD */
-.click-zone.right {
-  right: 0;
-  left:  auto;
-  cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24'%3E%3Cpath fill='%234a5e4a' d='M9 18l6-6-6-6'/%3E%3C/svg%3E") 12 12, e-resize;
-}
+.click-zone.left  { left: 0;    cursor: w-resize; }
+.click-zone.right { right: 0;   cursor: e-resize; left: auto; }
 
-/* ============================================================
-   NAVIGATION BAR (below book)
-   ============================================================ */
+/* ── Nav bar ── */
 .nav {
   display: flex;
   align-items: center;
@@ -208,7 +150,6 @@ body {
 }
 .nav-btn:hover:not(:disabled) { background: rgba(0,0,0,.07); }
 .nav-btn:disabled { opacity: .28; cursor: default; }
-
 .nav-info {
   font-size: 9px;
   letter-spacing: .18em;
@@ -217,9 +158,6 @@ body {
   text-align: center;
 }
 
-/* ============================================================
-   KEYBOARD HINT (bottom of screen)
-   ============================================================ */
 .hint {
   position: fixed;
   bottom: 14px;
@@ -232,232 +170,141 @@ body {
   pointer-events: none;
   white-space: nowrap;
 }
-
-/* ============================================================
-   RESPONSIVE SCALING
-   On small screens we scale the whole book down via CSS zoom.
-   ============================================================ */
-/* No fixed breakpoints needed — dimensions are fully fluid via min() above. */
 </style>
 </head>
 <body>
 
-<!-- ============================================================
-     BOOK WRAPPER — all leaves are injected here by JavaScript
-     ============================================================ -->
 <div class="book-wrapper" id="book">
-  <!-- Static background panels (always visible behind the leaves) -->
-  <div class="panel left"  id="panelLeft"></div>
-  <div class="panel right" id="panelRight"></div>
-
-  <!-- Spine decorative line -->
+  <div class="panel left"></div>
+  <div class="panel right"></div>
   <div class="spine"></div>
-
-  <!-- Transparent click zones (z-index 100, above all unturning pages) -->
   <div class="click-zone left"  onclick="turnBackward()"></div>
   <div class="click-zone right" onclick="turnForward()"></div>
-
-  <!-- .page leaves are dynamically injected below by JS -->
 </div>
 
-<!-- Navigation bar -->
 <nav class="nav">
   <button class="nav-btn" id="btnPrev" onclick="turnBackward()" disabled>← Prev</button>
   <span   class="nav-info" id="navInfo">Cover</span>
   <button class="nav-btn" id="btnNext" onclick="turnForward()">Next →</button>
 </nav>
 
-<p class="hint">← → arrow keys &nbsp;|&nbsp; click left or right half of the book to turn pages</p>
+<p class="hint">← → arrow keys &nbsp;|&nbsp; click left or right half of the book</p>
 
-
-<!-- ============================================================
-     JAVASCRIPT
-     ============================================================ -->
 <script>
-/* ──────────────────────────────────────────────────────────────
-   PAGE IMAGE LIST
-   34 pages from the PDF → 17 leaves.  Each leaf has:
-     front = odd-numbered PDF page  (right side, before turning)
-     back  = even-numbered PDF page (left  side, after  turning)
+/* ── Configuration ─────────────────────────────────────────────
+   ★ TOTAL_PAGES: update if the PDF page count changes.
+   ★ IMG_DIR / IMG_EXT: update if you rename the folder or format.
+   ──────────────────────────────────────────────────────────────*/
+const TOTAL_PAGES = 34;
+const IMG_DIR     = 'flipbook-pages/';
+const IMG_PREFIX  = 'page-';
+const IMG_EXT     = '.png';   /* lossless PNG — 300 DPI, no compression artefacts */
 
-   ★ If you add or remove PDF pages, only change TOTAL_PAGES.
-     The loop below auto-generates all leaves.
-   ────────────────────────────────────────────────────────────── */
-const TOTAL_PAGES = 34;                          /* total PDF pages  */
-const IMG_DIR     = 'flipbook-pages/';           /* relative path to images folder */
-const IMG_PREFIX  = 'page-';                     /* filename prefix  */
-const IMG_EXT     = '.jpg';                      /* file extension   */
+const NUM_LEAVES  = Math.ceil(TOTAL_PAGES / 2);
 
-/** Returns image path for a 1-based page number. */
 function imgPath(n) {
   return IMG_DIR + IMG_PREFIX + String(n).padStart(2, '0') + IMG_EXT;
 }
 
-/* ──────────────────────────────────────────────────────────────
-   BUILD & INJECT PAGE LEAVES
-   Each .page leaf covers one spread (front + back).
-   Leaves are appended to the book BEFORE the click-zones so
-   z-index ordering works correctly.
-   ────────────────────────────────────────────────────────────── */
-const book       = document.getElementById('book');
-const spineEl    = book.querySelector('.spine');
-const NUM_LEAVES = Math.ceil(TOTAL_PAGES / 2);  /* 17 leaves for 34 pages */
-const leaves     = [];                           /* keep JS references */
+/* ── Build DOM ─────────────────────────────────────────────────*/
+const book    = document.getElementById('book');
+const spineEl = book.querySelector('.spine');
+const leaves  = [];
 
 for (let i = 0; i < NUM_LEAVES; i++) {
-  const frontPage = i * 2 + 1;                  /* 1, 3, 5, … 33     */
-  const backPage  = i * 2 + 2;                  /* 2, 4, 6, … 34     */
+  const frontNum = i * 2 + 1;
+  const backNum  = i * 2 + 2;
 
   const leaf = document.createElement('div');
-  leaf.className    = 'page';
+  leaf.className     = 'page';
   leaf.dataset.index = i;
 
-  /* ── Front face ── */
+  /* Front face */
   const front = document.createElement('div');
   front.className = 'front';
-  if (frontPage <= TOTAL_PAGES) {
-    const img = document.createElement('img');
-    img.src = imgPath(frontPage);
-    img.alt = 'Page ' + frontPage;
-    /* loading="eager" for first few pages, lazy for the rest */
-    img.loading = (i < 3) ? 'eager' : 'lazy';
+  if (frontNum <= TOTAL_PAGES) {
+    const img = new Image();
+    img.src     = imgPath(frontNum);
+    img.alt     = 'Page ' + frontNum;
+    img.loading = i < 2 ? 'eager' : 'lazy';
+    img.decoding = 'async';
     front.appendChild(img);
   }
 
-  /* ── Back face ── */
+  /* Back face */
   const back = document.createElement('div');
   back.className = 'back';
-  if (backPage <= TOTAL_PAGES) {
-    const img = document.createElement('img');
-    img.src = imgPath(backPage);
-    img.alt = 'Page ' + backPage;
-    img.loading = (i < 3) ? 'eager' : 'lazy';
+  if (backNum <= TOTAL_PAGES) {
+    const img = new Image();
+    img.src     = imgPath(backNum);
+    img.alt     = 'Page ' + backNum;
+    img.loading = i < 2 ? 'eager' : 'lazy';
+    img.decoding = 'async';
     back.appendChild(img);
   }
 
   leaf.appendChild(front);
   leaf.appendChild(back);
-
-  /* Insert BEFORE the spine (spine stays on top) */
   book.insertBefore(leaf, spineEl);
   leaves.push(leaf);
 }
 
-/* ──────────────────────────────────────────────────────────────
-   STATE
-   currentFlipped  = number of leaves that have been turned.
-     0            → cover page visible on the right
-     1            → leaf 0 turned; leaf 1 front visible on right
-     NUM_LEAVES   → all leaves turned; back cover on left
-   ────────────────────────────────────────────────────────────── */
+/* ── State ─────────────────────────────────────────────────────*/
 let currentFlipped = 0;
 
-/* ──────────────────────────────────────────────────────────────
-   Z-INDEX MANAGEMENT
-   Right stack (unflipped): top-most leaf should have highest z.
-   Left  stack (flipped):   last-flipped leaf should have highest z.
-   ────────────────────────────────────────────────────────────── */
 function updateZIndices() {
   leaves.forEach((leaf, i) => {
-    if (i < currentFlipped) {
-      /* Left stack — later-flipped pages sit higher */
-      leaf.style.zIndex = i + 1;
-    } else {
-      /* Right stack — earlier pages sit higher (on top) */
-      leaf.style.zIndex = NUM_LEAVES - i + 1;
-    }
+    leaf.style.zIndex = i < currentFlipped
+      ? i + 1
+      : NUM_LEAVES - i + 1;
   });
 }
 
-/* ──────────────────────────────────────────────────────────────
-   TURN FORWARD (flip the next leaf from right → left)
-   ────────────────────────────────────────────────────────────── */
+/* ── Flip forward ──────────────────────────────────────────────*/
 function turnForward() {
-  if (currentFlipped >= NUM_LEAVES) return;        /* already at end  */
-
+  if (currentFlipped >= NUM_LEAVES) return;
   const leaf = leaves[currentFlipped];
-
-  /* During animation this leaf rises above all others */
-  leaf.classList.add('turning');
-
-  /* CSS transition: rotateY(0) → rotateY(-180deg) */
-  leaf.classList.add('flipped');
-
+  leaf.classList.add('turning', 'flipped');
   currentFlipped++;
   updateZIndices();
   updateNav();
-
-  leaf.addEventListener('transitionend', () => {
-    leaf.classList.remove('turning');
-  }, { once: true });
+  leaf.addEventListener('transitionend', () => leaf.classList.remove('turning'), { once: true });
 }
 
-/* ──────────────────────────────────────────────────────────────
-   TURN BACKWARD (un-flip the most-recently-turned leaf: left → right)
-   ────────────────────────────────────────────────────────────── */
+/* ── Flip backward ─────────────────────────────────────────────*/
 function turnBackward() {
-  if (currentFlipped <= 0) return;                 /* already at start */
-
+  if (currentFlipped <= 0) return;
   currentFlipped--;
   const leaf = leaves[currentFlipped];
-
   leaf.classList.add('turning');
-
-  /* CSS transition: rotateY(-180deg) → rotateY(0) */
   leaf.classList.remove('flipped');
-
   updateZIndices();
   updateNav();
-
-  leaf.addEventListener('transitionend', () => {
-    leaf.classList.remove('turning');
-  }, { once: true });
+  leaf.addEventListener('transitionend', () => leaf.classList.remove('turning'), { once: true });
 }
 
-/* ──────────────────────────────────────────────────────────────
-   NAV BAR UPDATE
-   ────────────────────────────────────────────────────────────── */
+/* ── Nav bar ───────────────────────────────────────────────────*/
 const btnPrev = document.getElementById('btnPrev');
 const btnNext = document.getElementById('btnNext');
 const navInfo = document.getElementById('navInfo');
 
 function updateNav() {
-  btnPrev.disabled = (currentFlipped === 0);
-  btnNext.disabled = (currentFlipped >= NUM_LEAVES);
-
-  if (currentFlipped === 0) {
-    navInfo.textContent = 'Cover';
-  } else if (currentFlipped >= NUM_LEAVES) {
-    navInfo.textContent = 'End';
-  } else {
-    /* Show visible page numbers:
-       left  = back of leaf (currentFlipped-1)  → PDF page currentFlipped*2
-       right = front of leaf (currentFlipped)   → PDF page currentFlipped*2+1  */
-    const leftPg  = currentFlipped * 2;
-    const rightPg = currentFlipped * 2 + 1;
-    navInfo.textContent = `${leftPg} / ${rightPg}`;
-  }
+  btnPrev.disabled = currentFlipped === 0;
+  btnNext.disabled = currentFlipped >= NUM_LEAVES;
+  if      (currentFlipped === 0)         navInfo.textContent = 'Cover';
+  else if (currentFlipped >= NUM_LEAVES) navInfo.textContent = 'End';
+  else navInfo.textContent = `${currentFlipped * 2} / ${currentFlipped * 2 + 1}`;
 }
 
-/* ──────────────────────────────────────────────────────────────
-   KEYBOARD NAVIGATION
-   ────────────────────────────────────────────────────────────── */
+/* ── Keyboard ──────────────────────────────────────────────────*/
 document.addEventListener('keydown', e => {
-  if (e.key === 'ArrowRight' || e.key === 'ArrowDown' || e.key === ' ') {
-    e.preventDefault();
-    turnForward();
-  } else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
-    e.preventDefault();
-    turnBackward();
-  }
+  if (['ArrowRight', 'ArrowDown', ' '].includes(e.key)) { e.preventDefault(); turnForward();  }
+  if (['ArrowLeft',  'ArrowUp'       ].includes(e.key)) { e.preventDefault(); turnBackward(); }
 });
 
-/* ──────────────────────────────────────────────────────────────
-   INITIALISE
-   ────────────────────────────────────────────────────────────── */
+/* ── Init ──────────────────────────────────────────────────────*/
 updateZIndices();
 updateNav();
 </script>
-
 </body>
 </html>
