@@ -15,11 +15,13 @@ permalink: /
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
 :root {
-  /* Book dimensions — landscape A4 ratio (297:210 ≈ 1.414:1).
-     Single page: 600 × 424 px.  Book spread: 1200 × 424 px.  */
-  --page-w: 600px;
-  --page-h: 424px;
-  --book-w: 1200px;         /* two pages side by side  */
+  /* Book dimensions — fluid, landscape A4 ratio (297:210 ≈ 1.414).
+     Width:  at most 47 vw per page (book = 94 vw).
+     Height: at most (100vh - 110px) for page height, back-calculated to width.
+     The min() picks whichever constraint is tighter.               */
+  --page-w: min(47vw, calc((100vh - 110px) * 297 / 210));
+  --page-h: calc(var(--page-w) * 210 / 297);
+  --book-w: calc(var(--page-w) * 2);
 
   --bg:         #dedad4;    /* page background / scene  */
   --paper:      #f9f8f5;    /* right-stack page face    */
@@ -239,12 +241,7 @@ body {
    RESPONSIVE SCALING
    On small screens we scale the whole book down via CSS zoom.
    ============================================================ */
-/* Responsive — each breakpoint keeps the 297:210 landscape A4 ratio */
-@media (max-width: 1260px) { :root { --page-w:500px; --page-h:354px; --book-w:1000px; } }
-@media (max-width: 1060px) { :root { --page-w:420px; --page-h:297px; --book-w: 840px; } }
-@media (max-width: 880px)  { :root { --page-w:340px; --page-h:240px; --book-w: 680px; } }
-@media (max-width: 720px)  { :root { --page-w:260px; --page-h:184px; --book-w: 520px; } }
-@media (max-width: 560px)  { :root { --page-w:200px; --page-h:141px; --book-w: 400px; } }
+/* No fixed breakpoints needed — dimensions are fully fluid via min() above. */
 </style>
 </head>
 <body>
