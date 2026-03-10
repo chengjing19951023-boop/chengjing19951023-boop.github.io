@@ -1,3 +1,7 @@
+---
+layout: none
+permalink: /
+---
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -11,11 +15,11 @@
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
 :root {
-  /* Book dimensions — adjust PAGE_W / PAGE_H to match your PDF aspect ratio.
-     The PDF is likely A3 landscape or A4 portrait; 420×560 ≈ A4 portrait.  */
-  --page-w: 420px;
-  --page-h: 560px;
-  --book-w: 840px;          /* two pages side by side  */
+  /* Book dimensions — landscape A4 ratio (297:210 ≈ 1.414:1).
+     Single page: 500 × 354 px.  Book spread: 1000 × 354 px.  */
+  --page-w: 500px;
+  --page-h: 354px;
+  --book-w: 1000px;         /* two pages side by side  */
 
   --bg:         #dedad4;    /* page background / scene  */
   --paper:      #f9f8f5;    /* right-stack page face    */
@@ -235,9 +239,11 @@ body {
    RESPONSIVE SCALING
    On small screens we scale the whole book down via CSS zoom.
    ============================================================ */
-@media (max-width: 900px)  { :root { --page-w:320px; --page-h:427px; --book-w:640px; } }
-@media (max-width: 680px)  { :root { --page-w:260px; --page-h:347px; --book-w:520px; } }
-@media (max-width: 560px)  { :root { --page-w:200px; --page-h:267px; --book-w:400px; } }
+/* Responsive — each breakpoint keeps the 297:210 landscape A4 ratio */
+@media (max-width: 1060px) { :root { --page-w:420px; --page-h:297px; --book-w:840px; } }
+@media (max-width: 880px)  { :root { --page-w:340px; --page-h:240px; --book-w:680px; } }
+@media (max-width: 720px)  { :root { --page-w:260px; --page-h:184px; --book-w:520px; } }
+@media (max-width: 560px)  { :root { --page-w:200px; --page-h:141px; --book-w:400px; } }
 </style>
 </head>
 <body>
